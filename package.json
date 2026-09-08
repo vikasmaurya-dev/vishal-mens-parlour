@@ -1,0 +1,41 @@
+{
+  "name": "hair-salion-project",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "supabase": "supabase",
+    "supabase:link": "supabase link --project-ref cffcxcmsygmkxpfbzqsz",
+    "deploy:functions": "supabase functions deploy request-otp && supabase functions deploy verify-otp && supabase functions deploy create-booking"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "framer-motion": "^13.1.1",
+    "jsdom": "^29.1.1",
+    "lucide-react": "^1.39.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
+    "tailwindcss": "^4.3.3",
+    "vitest": "^4.1.11",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "oxlint": "^1.79.0",
+    "supabase": "^2.116.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  }
+}
