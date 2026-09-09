@@ -1881,3 +1881,273 @@ img {
     display: none !important;
   }
 }
+
+/* ---- Admin panel mobile refinements ---- */
+@media (max-width: 640px) {
+  .login-card {
+    padding: 28px 22px;
+    border-radius: 10px;
+  }
+
+  .login-card h1,
+  .login-card .brand {
+    font-size: 24px;
+  }
+
+  .admin-content {
+    padding: 20px 12px 40px;
+  }
+
+  .admin-sidebar {
+    padding: 14px 12px;
+  }
+
+  .admin-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 12px;
+  }
+
+  .admin-nav a {
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .admin-topbar {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .admin-topbar .actions {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .admin-topbar .actions a,
+  .admin-topbar .actions button {
+    min-height: 36px;
+  }
+
+  .admin-topbar .field {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .admin-topbar input {
+    width: 100%;
+  }
+
+  /* Tables: give a visible edge so users know they can scroll */
+  .table-wrap {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.06));
+    border-radius: 0 8px 8px 0;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 10px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .data-table .actions {
+    gap: 4px;
+  }
+
+  /* Editor dialogs — even tighter on small screens */
+  .admin-service-editor {
+    width: 100%;
+    margin: 6px 0;
+    border-radius: 10px;
+  }
+
+  .editor-header {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .editor-header h2 {
+    font-size: 22px;
+  }
+
+  .editor-footer {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .editor-footer .btn {
+    flex: 1;
+    padding-inline: 12px;
+  }
+
+  .editor-fields,
+  .editor-grid,
+  .detail-grid {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Metric cards: compact numbers */
+  .metric {
+    padding: 16px;
+    min-height: 130px;
+  }
+
+  .metric strong {
+    font-size: 26px;
+  }
+
+  /* Admin profile card on sidebar */
+  .admin-profile {
+    padding: 12px;
+    gap: 10px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+
+  /* Booking-shell inside admin */
+  .booking-shell {
+    padding: 12px;
+  }
+
+  .booking-card {
+    padding: 20px 16px;
+  }
+
+  /* Public site mobile-only extras */
+  .footer {
+    padding: 40px 0 24px;
+  }
+
+  .footer-grid {
+    gap: 28px;
+  }
+
+  .top-strip {
+    font-size: 11px;
+    padding: 6px 10px;
+    gap: 10px;
+  }
+
+  .top-strip span:last-child {
+    display: none;
+  }
+
+  .section {
+    padding: 56px 0;
+  }
+}
+
+/* Prevent horizontal scroll on the whole page (safety net) */
+html, body {
+  overflow-x: hidden;
+}
+
+/* ---- Mobile overflow hardening (aggressive) ---- */
+@media (max-width: 900px) {
+  /* Force everything inside admin to respect viewport width */
+  .admin-shell,
+  .admin-main,
+  .admin-sidebar,
+  .admin-content,
+  .admin-topbar,
+  .admin-footer {
+    max-width: 100vw;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .admin-topbar .field,
+  .admin-topbar input {
+    max-width: 100%;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* Prevent revenue-card / plain-card from pushing width */
+  .revenue-card,
+  .plain-card,
+  .metric,
+  article {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Metric grid: allow tight columns without overflow */
+  .metric-grid {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .metric-grid.mobile-two,
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Ensure inputs inside admin-content never exceed */
+  .admin-content input,
+  .admin-content textarea,
+  .admin-content select {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Any container should shrink */
+  .container {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+}
+
+/* Truly aggressive width constraint on very narrow screens */
+@media (max-width: 480px) {
+  .admin-topbar .actions {
+    gap: 6px;
+    padding: 0;
+  }
+
+  .admin-topbar .actions a,
+  .admin-topbar .actions .status {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+
+  .admin-nav {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-nav a {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .metric-grid,
+  .metric-grid.mobile-two {
+    grid-template-columns: 1fr !important;
+  }
+}
