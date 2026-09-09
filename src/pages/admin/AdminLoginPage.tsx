@@ -1,4 +1,4 @@
-import { ArrowRight, EyeOff, Lock, Mail, Scissors } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Scissors } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Brand } from '../../components/common/Brand'
@@ -8,6 +8,7 @@ export function AdminLoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -60,8 +61,34 @@ export function AdminLoginPage() {
           </div>
           <span style={{ position: 'relative' }}>
             <Lock size={18} style={{ position: 'absolute', left: 12, top: 14 }} />
-            <input id="admin-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} style={{ paddingLeft: 42, paddingRight: 42 }} required />
-            <EyeOff size={18} style={{ position: 'absolute', right: 12, top: 14 }} />
+            <input
+              id="admin-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              style={{ paddingLeft: 42, paddingRight: 42 }}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                padding: 6,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'inherit',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+            </button>
           </span>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
