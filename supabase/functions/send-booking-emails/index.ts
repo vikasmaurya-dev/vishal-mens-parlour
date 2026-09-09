@@ -129,10 +129,13 @@ Deno.serve(async (request) => {
       }).catch((error) => ({ error: String(error) }))
     }
 
+    console.log('send-booking-emails results:', JSON.stringify(results))
     return Response.json({ ok: true, results }, { headers: corsHeaders })
   } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error)
+    console.error('send-booking-emails error:', raw)
     return Response.json(
-      { ok: false, message: error instanceof Error ? error.message : 'send-booking-emails failed' },
+      { ok: false, message: raw },
       { status: 500, headers: corsHeaders },
     )
   }
