@@ -9,6 +9,7 @@ import type {
   Offer,
   Service,
   ServiceCategory,
+  Testimonial,
 } from '../types/domain'
 
 const img = (id: string) =>
@@ -371,6 +372,33 @@ export const appointments: Appointment[] = [
     endAt: '2026-09-02T15:30:00+05:30',
     status: 'COMPLETED',
     servicePriceSnapshot: 300,
+  },
+]
+
+export const testimonials: Testimonial[] = [
+  {
+    id: 't1',
+    customerName: 'Rohit S.',
+    rating: 5,
+    review: 'Best haircut I have had in years. Clean setup, on-time appointment, and my barber actually listened to what I wanted.',
+    featured: true,
+    active: true,
+  },
+  {
+    id: 't2',
+    customerName: 'Arjun M.',
+    rating: 5,
+    review: 'Booked online in a minute, walked in, out in 30 mins looking sharp. This is how a men’s salon should work.',
+    featured: true,
+    active: true,
+  },
+  {
+    id: 't3',
+    customerName: 'Karan P.',
+    rating: 5,
+    review: 'Beard styling was on point. Staff is polite and the shop is spotless. Highly recommend.',
+    featured: true,
+    active: true,
   },
 ]
 

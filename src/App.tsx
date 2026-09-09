@@ -1,12 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { AdminGuard } from './components/common/AdminGuard'
+import { Analytics } from './components/common/Analytics'
 import { AdminLayout } from './layouts/AdminLayout'
 import { PublicLayout } from './layouts/PublicLayout'
 import { BookingPage } from './pages/booking/BookingPage'
+import { ManageBookingPage } from './pages/booking/ManageBookingPage'
 import { AdminAppointmentsPage } from './pages/admin/AdminAppointmentsPage'
 import { AdminCalendarPage } from './pages/admin/AdminCalendarPage'
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
+import { AdminForgotPasswordPage } from './pages/admin/AdminForgotPasswordPage'
 import { AdminLoginPage } from './pages/admin/AdminLoginPage'
+import { AdminResetPasswordPage } from './pages/admin/AdminResetPasswordPage'
 import { AdminServicesPage } from './pages/admin/AdminServicesPage'
 import { AdminWebsiteContentPage } from './pages/admin/AdminWebsiteContentPage'
 import { AboutPage } from './pages/public/AboutPage'
@@ -17,7 +22,9 @@ import { ServicesPage } from './pages/public/ServicesPage'
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Analytics />
+      <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<HomePage />} />
         <Route path="services" element={<ServicesPage />} />
@@ -26,8 +33,18 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
       </Route>
       <Route path="book" element={<BookingPage />} />
+      <Route path="manage-booking" element={<ManageBookingPage />} />
       <Route path="admin/login" element={<AdminLoginPage />} />
-      <Route path="admin" element={<AdminLayout />}>
+      <Route path="admin/forgot-password" element={<AdminForgotPasswordPage />} />
+      <Route path="admin/reset-password" element={<AdminResetPasswordPage />} />
+      <Route
+        path="admin"
+        element={
+          <AdminGuard>
+            <AdminLayout />
+          </AdminGuard>
+        }
+      >
         <Route index element={<AdminDashboardPage />} />
         <Route path="appointments" element={<AdminAppointmentsPage />} />
         <Route path="calendar" element={<AdminCalendarPage />} />
@@ -36,6 +53,7 @@ export default function App() {
         <Route path="content" element={<AdminWebsiteContentPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }

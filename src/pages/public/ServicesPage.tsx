@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { ServiceCard } from '../../components/common/ServiceCard'
+import { SeoHead } from '../../components/common/SeoHead'
 import { usePublicData } from '../../hooks/usePublicData'
 
 export function ServicesPage() {
@@ -16,6 +17,12 @@ export function ServicesPage() {
 
   return (
     <main>
+      <SeoHead
+        title={`Services & Prices — ${businessSettings.salonName}`}
+        description={`Full menu of haircuts, beard styling, shaves, and grooming services at ${businessSettings.salonName}. Transparent pricing and online booking.`}
+        path="/services"
+        image={businessSettings.servicesHeroImage}
+      />
       <section
         className="page-hero"
         style={{ '--hero-image': `url(${businessSettings.servicesHeroImage})` } as CSSProperties}

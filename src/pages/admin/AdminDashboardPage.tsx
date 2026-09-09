@@ -1,18 +1,19 @@
-import { CalendarCheck, CheckCircle2, CreditCard, MessageSquareText, Phone, UsersRound, Clock } from 'lucide-react'
+import { CalendarCheck, CheckCircle2, CreditCard, MessageSquareText, Phone, TrendingUp, UsersRound, Clock, XCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useMemo } from 'react'
+import { SkeletonCard } from '../../components/common/Skeleton'
 import { useAdminData } from '../../hooks/useAdminData'
+import { computeKpis } from '../../utils/kpis'
 import { formatDateTime, formatMoney } from '../../utils/format'
 
 export function AdminDashboardPage() {
   const { data, loading, error } = useAdminData()
   const appointments = data?.appointments ?? []
   const customers = data?.customers ?? []
-  const pending = appointments.filter((item) => item.status === 'PENDING').length
-  const revenue = appointments
-    .filter((item) => item.status !== 'CANCELLED')
-    .reduce((sum, item) => sum + item.servicePriceSnapshot, 0)
 
-  if (loading) return <AdminNotice title="Loading dashboard..." />
+  const kpis = useMemo(() => computeKpis(appointments), [appointments])
+
+  if (loading) return <DashboardSkeleton />
   if (error) return <AdminNotice title="Dashboard data issue" detail={error} />
 
   return (
@@ -24,19 +25,19 @@ export function AdminDashboardPage() {
         <p className="muted">Here is what is happening at the parlour today.</p>
         <article className="revenue-card" style={{ marginTop: 24 }}>
           <span className="eyebrow">Today's Revenue</span>
-          <strong>{formatMoney(revenue)}</strong>
-          <p>+15% from yesterday</p>
+          <strong>{formatMoney(kpis.todayRevenue)}</strong>
+          <p>{formatMoney(kpis.weekRevenue)} this week</p>
         </article>
         <div className="metric-grid mobile-two">
-          <Metric icon={<UsersRound />} label="Total Bookings" value={appointments.length.toString()} note="Today" />
-          <Metric icon={<Clock />} label="Pending" value={pending.toString()} note="Need review" />
+          <Metric icon={<CalendarCheck />} label="Today" value={kpis.todayBookingCount.toString()} note="Bookings" />
+          <Metric icon={<Clock />} label="Pending" value={kpis.pendingCount.toString()} note="Need review" />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 46 }}>
           <h2 className="serif" style={{ fontSize: 36 }}>Upcoming</h2>
-          <strong style={{ color: 'var(--warm)' }}>View All</strong>
+          <a href="/admin/appointments" style={{ color: 'var(--warm)', fontWeight: 600 }}>View All</a>
         </div>
         <div className="grid">
-          {appointments.slice(0, 2).map((appointment) => (
+          {kpis.todayAppointments.slice(0, 3).map((appointment) => (
             <article className="plain-card" key={appointment.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
                 <div style={{ display: 'flex', gap: 14 }}>
@@ -57,6 +58,7 @@ export function AdminDashboardPage() {
               </div>
             </article>
           ))}
+          {kpis.todayAppointments.length === 0 && <p className="muted">No bookings today yet.</p>}
         </div>
       </section>
       <section className="dashboard-desktop">
@@ -65,66 +67,82 @@ export function AdminDashboardPage() {
           <h1 className="section-title" style={{ textAlign: 'left', margin: 0 }}>
             Overview
           </h1>
-          <p className="muted">A summary of today’s operations and recent business performance.</p>
+          <p className="muted">Today's revenue, upcoming bookings, and no-show trends.</p>
         </div>
         <div className="actions">
-          <button className="btn secondary" type="button">
+          <a className="btn secondary" href="/admin/calendar" role="button">
             Block Time
-          </button>
-          <button className="btn" type="button">
-            New Appointment
-          </button>
+          </a>
+          <a className="btn" href="/admin/appointments" role="button">
+            All Appointments
+          </a>
         </div>
       </div>
       <section className="metric-grid">
-        <Metric icon={<CalendarCheck />} label="Appointments" value={appointments.length.toString()} note="Today" />
-        <Metric icon={<Clock />} label="Pending Requests" value={pending.toString()} note="Action needed" />
-        <Metric icon={<UsersRound />} label="Total Customers" value={customers.length.toString()} note="+12 this month ready" />
-        <Metric icon={<CreditCard />} label="Revenue Estimate" value={formatMoney(revenue)} note="Based on snapshots" />
+        <Metric icon={<CreditCard />} label="Today's Revenue" value={formatMoney(kpis.todayRevenue)} note="Active bookings" />
+        <Metric icon={<TrendingUp />} label="This Week" value={formatMoney(kpis.weekRevenue)} note="Rolling 7 days" />
+        <Metric icon={<CalendarCheck />} label="Today's Bookings" value={kpis.todayBookingCount.toString()} note={`${kpis.tomorrowBookingCount} tomorrow`} />
+        <Metric icon={<Clock />} label="Pending" value={kpis.pendingCount.toString()} note="Awaiting confirm" />
+        <Metric icon={<UsersRound />} label="Customers" value={customers.length.toString()} note="All-time" />
+        <Metric icon={<XCircle />} label="No-Show Rate" value={`${kpis.noShowRatePct}%`} note="Historical" />
       </section>
       <section className="admin-panel-grid">
         <article className="plain-card">
-          <h2 className="serif">Recent Customers</h2>
+          <h2 className="serif">Today's Schedule</h2>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Time</th>
                   <th>Customer</th>
                   <th>Service</th>
-                  <th>Date/Time</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((appointment) => (
+                {kpis.todayAppointments.map((appointment) => (
                   <tr key={appointment.id}>
+                    <td>{new Date(appointment.startAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</td>
                     <td>{appointment.customerName}</td>
                     <td>{appointment.serviceName}</td>
-                    <td>{formatDateTime(appointment.startAt)}</td>
-                    <td>
-                      <span className="status">{appointment.status}</span>
-                    </td>
+                    <td><span className="status">{appointment.status}</span></td>
                   </tr>
                 ))}
+                {kpis.todayAppointments.length === 0 && (
+                  <tr><td colSpan={4} className="muted">No bookings today.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         </article>
         <article className="plain-card">
-          <h2 className="serif">Today’s Schedule</h2>
+          <h2 className="serif">Tomorrow</h2>
           <div className="grid">
-            {appointments.map((appointment) => (
+            {kpis.tomorrowAppointments.map((appointment) => (
               <div className="plain-card" key={appointment.id}>
                 <strong>{formatDateTime(appointment.startAt)}</strong>
                 <p>{appointment.customerName}</p>
                 <p className="muted">{appointment.serviceName}</p>
               </div>
             ))}
+            {kpis.tomorrowAppointments.length === 0 && <p className="muted">No bookings tomorrow yet.</p>}
           </div>
         </article>
       </section>
       </section>
     </>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <section>
+      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: 20 }}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <SkeletonCard key={index} lines={2} />
+        ))}
+      </div>
+    </section>
   )
 }
 

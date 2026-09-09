@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom'
+import { SeoHead } from '../../components/common/SeoHead'
 import { businessSettings, galleryItems } from '../../constants/seedData'
 
 export function AboutPage() {
   return (
     <main>
+      <SeoHead
+        title={`About — ${businessSettings.salonName}`}
+        description={`${businessSettings.salonName} — traditional grooming with modern appointment discipline in ${businessSettings.city}.`}
+        path="/about"
+      />
       <section className="section">
         <div className="container split">
-          <img src={galleryItems[2].imagePath} alt="Salon chair and workstation" />
+          <img src={galleryItems[2].imagePath} alt="Salon chair and workstation" loading="lazy" decoding="async" />
           <div>
             <span className="eyebrow">Our heritage</span>
             <h1 className="section-title" style={{ textAlign: 'left' }}>

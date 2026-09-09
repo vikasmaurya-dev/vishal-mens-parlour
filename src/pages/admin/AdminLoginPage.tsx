@@ -56,7 +56,7 @@ export function AdminLoginPage() {
         <div className="field">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <label htmlFor="admin-password">Password</label>
-            <a className="muted" href="/admin/login">Forgot Password?</a>
+            <a className="muted" href="/admin/forgot-password">Forgot Password?</a>
           </div>
           <span style={{ position: 'relative' }}>
             <Lock size={18} style={{ position: 'absolute', left: 12, top: 14 }} />

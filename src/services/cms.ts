@@ -9,6 +9,7 @@ import {
   galleryItems,
   offers,
   services,
+  testimonials,
 } from '../constants/seedData'
 import { hasSupabaseConfig, supabase } from '../lib/supabase'
 import type {
@@ -25,6 +26,7 @@ import type {
   Service,
   ServiceCategory,
   StaffMember,
+  Testimonial,
 } from '../types/domain'
 
 async function fromSupabase<T>(table: string, fallback: T[], orderColumn = 'display_order'): Promise<T[]> {
@@ -141,6 +143,18 @@ function mapGalleryItem(row: Record<string, unknown>): GalleryItem {
   }
 }
 
+function mapTestimonial(row: Record<string, unknown>): Testimonial {
+  return {
+    id: String(row.id),
+    customerName: String(row.customer_name),
+    rating: Number(row.rating ?? 5),
+    review: String(row.review ?? ''),
+    imagePath: row.image_path ? String(row.image_path) : undefined,
+    featured: Boolean(row.featured),
+    active: Boolean(row.active),
+  }
+}
+
 function mapStaff(row: Record<string, unknown>): StaffMember {
   return {
     id: String(row.id),
@@ -210,6 +224,7 @@ export async function getPublicData() {
   const categoryRows = await fromSupabase<Record<string, unknown>>('service_categories', categories as unknown as Record<string, unknown>[])
   const serviceRows = await fromSupabase<Record<string, unknown>>('services', services as unknown as Record<string, unknown>[])
   const offerRows = await fromSupabase<Record<string, unknown>>('offers', offers as unknown as Record<string, unknown>[])
+  const testimonialRows = await fromSupabase<Record<string, unknown>>('testimonials', testimonials as unknown as Record<string, unknown>[], 'id')
   const businessRows = await fromSupabase<Record<string, unknown>>('business_settings', [businessSettings] as unknown as Record<string, unknown>[], 'created_at')
   const hoursRows = await fromSupabase<Record<string, unknown>>('business_hours', businessHours as unknown as Record<string, unknown>[], 'weekday')
   const galleryRows = hasSupabaseConfig && supabase
@@ -249,6 +264,7 @@ export async function getPublicData() {
     categories: categoryRows[0]?.image_path ? categoryRows.map(mapCategory) : categories,
     services: serviceRows[0]?.category_id ? serviceRows.map(mapService) : services,
     offers: offerRows[0]?.offer_price ? offerRows.map(mapOffer) : offers,
+    testimonials: testimonialRows[0]?.customer_name ? testimonialRows.map(mapTestimonial) : testimonials,
     galleryItems: galleryRows[0]?.visible !== undefined ? galleryRows.map(mapGalleryItem) : galleryItems,
     businessHours: hoursRows.length ? hoursRows.map(mapBusinessHour) : businessHours,
     bookingSettings: businessRow?.booking_enabled !== undefined ? mapBookingSettings(businessRow) : bookingSettings,

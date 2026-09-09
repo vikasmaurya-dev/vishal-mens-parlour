@@ -13,11 +13,10 @@ async function sha256(value: string) {
     .join('')
 }
 
-function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length === 10 && /^[6-9]/.test(digits)) return `+91${digits}`
-  if (digits.length === 12 && digits.startsWith('91') && /^[6-9]/.test(digits.slice(2))) return `+${digits}`
-  throw new Error('INVALID_PHONE')
+function normalizeEmail(value: string) {
+  const trimmed = String(value ?? '').trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) throw new Error('INVALID_EMAIL')
+  return trimmed
 }
 
 function getSecretKey() {
@@ -29,15 +28,15 @@ function getSecretKey() {
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   try {
-    const { phone, code } = await request.json()
-    const normalizedPhone = normalizePhone(phone)
+    const { email, code } = await request.json()
+    const normalizedEmail = normalizeEmail(email)
     if (!/^\d{4}$/.test(String(code))) throw new Error('INVALID_CODE')
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey())
     const { data: verification, error: readError } = await supabase
       .from('otp_verifications')
       .select('id, otp_hash, expires_at, attempt_count')
-      .eq('phone', normalizedPhone)
+      .eq('email', normalizedEmail)
       .is('used_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -46,7 +45,7 @@ Deno.serve(async (request) => {
       throw new Error('OTP_INVALID')
     }
 
-    const expectedHash = await sha256(`${normalizedPhone}:${code}:${Deno.env.get('OTP_PEPPER')}`)
+    const expectedHash = await sha256(`${normalizedEmail}:${code}:${Deno.env.get('OTP_PEPPER')}`)
     if (expectedHash !== verification.otp_hash) {
       await supabase.from('otp_verifications').update({ attempt_count: verification.attempt_count + 1 }).eq('id', verification.id)
       throw new Error('OTP_INVALID')

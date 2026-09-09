@@ -1,10 +1,16 @@
 import { CalendarCheck, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { SeoHead } from '../../components/common/SeoHead'
 import { businessSettings, businessHours } from '../../constants/seedData'
 
 export function ContactPage() {
   return (
     <main>
+      <SeoHead
+        title={`Contact — ${businessSettings.salonName}`}
+        description={`Call, WhatsApp, or visit ${businessSettings.salonName} at ${businessSettings.address}, ${businessSettings.city}. See opening hours and directions.`}
+        path="/contact"
+      />
       <section className="section">
         <div className="container split">
           <div>

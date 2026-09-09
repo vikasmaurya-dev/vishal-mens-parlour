@@ -1,9 +1,24 @@
-import { CheckCircle2, Eye, MessageCircle, Phone, Plus, Save, X, XCircle } from 'lucide-react'
-import { useState } from 'react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Eye, MessageCircle, Phone, Plus, Save, X, XCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { z } from 'zod'
 import { useAdminData } from '../../hooks/useAdminData'
 import { createManualAppointment, updateAppointmentStatus } from '../../services/cms'
+import { normalizeIndianPhone } from '../../services/bookingEngine'
 import type { Appointment, AppointmentStatus } from '../../types/domain'
 import { formatDateTime } from '../../utils/format'
+
+const manualSchema = z.object({
+  customerName: z.string().trim().min(2, 'Customer name is required.'),
+  customerPhone: z.string().min(1, 'Phone number is required.'),
+  customerEmail: z.string().optional().default(''),
+  serviceId: z.string().min(1, 'Pick a service.'),
+  staffId: z.string().optional().default(''),
+  startAt: z.string().min(1, 'Pick a start time.'),
+  notes: z.string().max(500).optional().default(''),
+})
+
+const PAGE_SIZE = 25
+const STATUS_FILTERS: Array<AppointmentStatus | 'ALL'> = ['ALL', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED']
 
 const manualDefaults = {
   customerName: '',
@@ -26,6 +41,24 @@ export function AdminAppointmentsPage() {
   const services = data?.services ?? []
   const staff = data?.staff ?? []
 
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'ALL'>('ALL')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [page, setPage] = useState(0)
+
+  const filtered = useMemo(() => {
+    return appointments.filter((appointment) => {
+      if (statusFilter !== 'ALL' && appointment.status !== statusFilter) return false
+      if (fromDate && appointment.startAt.slice(0, 10) < fromDate) return false
+      if (toDate && appointment.startAt.slice(0, 10) > toDate) return false
+      return true
+    })
+  }, [appointments, statusFilter, fromDate, toDate])
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount - 1)
+  const visible = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
+
   const changeStatus = async (appointmentId: string, status: AppointmentStatus) => {
     setSavingId(appointmentId)
     try {
@@ -37,14 +70,34 @@ export function AdminAppointmentsPage() {
   }
 
   const submitManual = async () => {
-    if (!manual.customerName || !manual.customerPhone || !manual.serviceId || !manual.startAt) {
-      setFormError('Customer, phone, service, aur time required hai.')
+    const parsed = manualSchema.safeParse(manual)
+    if (!parsed.success) {
+      setFormError(parsed.error.issues[0]?.message ?? 'Check the form details.')
+      return
+    }
+    if (parsed.data.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed.data.customerEmail)) {
+      setFormError('Enter a valid email.')
+      return
+    }
+    let normalizedPhone: string
+    try {
+      normalizedPhone = normalizeIndianPhone(parsed.data.customerPhone)
+    } catch (phoneError) {
+      setFormError(phoneError instanceof Error ? phoneError.message : 'Invalid phone number.')
       return
     }
     setSavingId('manual')
     setFormError(null)
     try {
-      await createManualAppointment(manual)
+      await createManualAppointment({
+        customerName: parsed.data.customerName,
+        customerPhone: normalizedPhone,
+        customerEmail: parsed.data.customerEmail,
+        serviceId: parsed.data.serviceId,
+        staffId: parsed.data.staffId,
+        startAt: parsed.data.startAt,
+        notes: parsed.data.notes,
+      })
       setManual(manualDefaults)
       setManualOpen(false)
       await refresh()
@@ -71,7 +124,34 @@ export function AdminAppointmentsPage() {
           <Plus size={18} /> New Appointment
         </button>
       </div>
-      <article className="plain-card table-wrap" style={{ marginTop: 26 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 22, alignItems: 'end' }}>
+        <label className="field" style={{ margin: 0 }}>
+          <span>Status</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as AppointmentStatus | 'ALL')
+              setPage(0)
+            }}
+          >
+            {STATUS_FILTERS.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field" style={{ margin: 0 }}>
+          <span>From</span>
+          <input type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setPage(0) }} />
+        </label>
+        <label className="field" style={{ margin: 0 }}>
+          <span>To</span>
+          <input type="date" value={toDate} onChange={(event) => { setToDate(event.target.value); setPage(0) }} />
+        </label>
+        <p className="muted" style={{ margin: '0 0 12px auto' }}>
+          {filtered.length} result{filtered.length === 1 ? '' : 's'} · page {safePage + 1} of {pageCount}
+        </p>
+      </div>
+      <article className="plain-card table-wrap" style={{ marginTop: 12 }}>
         <table className="data-table">
           <thead>
             <tr>
@@ -84,7 +164,10 @@ export function AdminAppointmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {appointments.map((appointment) => (
+            {visible.length === 0 && (
+              <tr><td colSpan={6} className="muted">No appointments match these filters.</td></tr>
+            )}
+            {visible.map((appointment) => (
               <tr key={appointment.id}>
                 <td>{appointment.bookingReference}</td>
                 <td>{appointment.customerName}</td>
@@ -124,6 +207,16 @@ export function AdminAppointmentsPage() {
           </tbody>
         </table>
       </article>
+      {pageCount > 1 && (
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+          <button className="btn ghost" type="button" disabled={safePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+            <ChevronLeft size={16} /> Previous
+          </button>
+          <button className="btn ghost" type="button" disabled={safePage >= pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
       {manualOpen && (
         <div className="dialog-backdrop admin-dialog-backdrop" role="dialog" aria-modal="true" aria-label="New appointment">
           <div className="dialog admin-service-editor">

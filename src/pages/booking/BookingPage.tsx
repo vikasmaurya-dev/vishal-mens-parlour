@@ -5,22 +5,17 @@ import { z } from 'zod'
 import { Brand } from '../../components/common/Brand'
 import { appointments, blockedTimes } from '../../constants/seedData'
 import { generateSlots, normalizeIndianPhone } from '../../services/bookingEngine'
-import { createBooking, requestBookingOtp, verifyBookingOtp } from '../../services/bookingApi'
+import { createBooking, requestEmailBookingOtp, verifyEmailBookingOtp } from '../../services/bookingApi'
 import { usePublicData } from '../../hooks/usePublicData'
 import type { Service } from '../../types/domain'
 import { formatMoney } from '../../utils/format'
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const customerSchema = z.object({
   fullName: z.string().trim().min(2, 'Enter your full name.'),
-  phone: z.string().transform((value, ctx) => {
-    try {
-      return normalizeIndianPhone(value)
-    } catch (error) {
-      ctx.addIssue({ code: 'custom', message: error instanceof Error ? error.message : 'Invalid phone number.' })
-      return z.NEVER
-    }
-  }),
-  email: z.string().email('Enter a valid email.').optional().or(z.literal('')),
+  phone: z.string().min(1, 'Enter your mobile number.'),
+  email: z.string().trim().min(1, 'Enter your email address.').refine((value) => emailRegex.test(value), 'Enter a valid email address.'),
   notes: z.string().max(300).optional(),
 })
 
@@ -33,9 +28,14 @@ export function BookingPage() {
   const initialService = services.find((service) => service.id === requestedService || service.slug === requestedService) ?? services[0]
   const [step, setStep] = useState<Step>(1)
   const [service, setService] = useState<Service>(initialService)
-  const [date, setDate] = useState(() => new Date('2026-09-02T09:00:00+05:30'))
+  const [date, setDate] = useState(() => {
+    const today = new Date()
+    today.setHours(9, 0, 0, 0)
+    return today
+  })
   const [slot, setSlot] = useState<Date | null>(null)
   const [customer, setCustomer] = useState({ fullName: '', phone: '', email: '', notes: '' })
+  const [honeypot, setHoneypot] = useState('')
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [reference, setReference] = useState('')
@@ -54,10 +54,14 @@ export function BookingPage() {
         appointments,
         blockedTimes,
         settings: bookingSettings,
-        now: new Date('2026-09-01T09:00:00+05:30'),
       }),
     [date, currentService, businessHours, bookingSettings],
   )
+
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const maxDateIso = new Date(Date.now() + bookingSettings.advanceBookingDays * 86_400_000)
+    .toISOString()
+    .slice(0, 10)
 
   async function nextFromDetails() {
     const result = customerSchema.safeParse(customer)
@@ -65,10 +69,17 @@ export function BookingPage() {
       setError(result.error.issues[0]?.message ?? 'Check your details.')
       return
     }
+    // Validate phone once here so bad numbers fail before we send an OTP.
+    try {
+      normalizeIndianPhone(result.data.phone)
+    } catch (phoneError) {
+      setError(phoneError instanceof Error ? phoneError.message : 'Invalid mobile number.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      const response = await requestBookingOtp(result.data.phone)
+      const response = await requestEmailBookingOtp(result.data.email.trim().toLowerCase(), honeypot)
       setOtpId(response.otpId)
       setDevelopmentCode(response.developmentCode ?? '')
       setStep(5)
@@ -88,12 +99,13 @@ export function BookingPage() {
     setLoading(true)
     try {
       const normalizedPhone = normalizeIndianPhone(customer.phone)
-      const verified = await verifyBookingOtp(normalizedPhone, otp)
+      const normalizedEmail = customer.email.trim().toLowerCase()
+      const verified = await verifyEmailBookingOtp(normalizedEmail, otp)
       const confirmation = await createBooking({
         otpId: verified.otpId || otpId,
         fullName: customer.fullName,
         phone: normalizedPhone,
-        email: customer.email,
+        email: normalizedEmail,
         serviceId: currentService.id,
         startAt: slot?.toISOString() ?? '',
         notes: customer.notes,
@@ -122,7 +134,7 @@ export function BookingPage() {
               </p>
             </div>
             <div className="step-list" aria-label="Booking progress">
-              {['Service', 'Date', 'Time', 'Details', 'OTP', 'Confirm'].map((label, index) => (
+              {['Service', 'Date', 'Time', 'Details', 'Verify Email', 'Confirm'].map((label, index) => (
                 <div className={`step ${step === index + 1 ? 'active' : ''}`} key={label}>
                   <span>{index + 1}</span> {label}
                 </div>
@@ -168,8 +180,15 @@ export function BookingPage() {
                   <input
                     id="booking-date"
                     type="date"
+                    min={todayIso}
+                    max={maxDateIso}
                     value={date.toISOString().slice(0, 10)}
-                    onChange={(event) => setDate(new Date(`${event.target.value}T09:00:00+05:30`))}
+                    onChange={(event) => {
+                      if (!event.target.value) return
+                      const next = new Date(`${event.target.value}T09:00:00`)
+                      setDate(next)
+                      setSlot(null)
+                    }}
                   />
                 </div>
                 <button className="btn" onClick={() => setStep(3)}>
@@ -216,16 +235,37 @@ export function BookingPage() {
                   <input id="phone" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} />
                 </div>
                 <div className="field">
-                  <label htmlFor="email">Email optional</label>
-                  <input id="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} />
+                  <label htmlFor="email">Email address (we will send your verification code here)</label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    required
+                    value={customer.email}
+                    onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="notes">Notes optional</label>
                   <textarea id="notes" value={customer.notes} onChange={(e) => setCustomer({ ...customer, notes: e.target.value })} />
                 </div>
+                {/* Honeypot: hidden from users, only bots will fill it. */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label htmlFor="company">Company (leave blank)</label>
+                  <input
+                    id="company"
+                    name="company"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
                 {error && <p style={{ color: 'var(--danger)' }}>{error}</p>}
                 <button className="btn" onClick={nextFromDetails} disabled={loading}>
-                  {loading ? 'Sending...' : 'Send OTP'}
+                  {loading ? 'Sending code...' : 'Send verification email'}
                 </button>
               </>
             )}
@@ -233,8 +273,10 @@ export function BookingPage() {
             {step === 5 && (
               <>
                 <ShieldCheck size={34} />
-                <h1 className="serif">Verify Mobile OTP</h1>
-                <p className="muted">Production OTPs are generated and hashed in Supabase Edge Functions. Local development uses a gated test code.</p>
+                <h1 className="serif">Verify your email</h1>
+                <p className="muted">
+                  We sent a 4-digit code to <strong>{customer.email}</strong>. Check your inbox (and spam folder). Code expires in 5 minutes.
+                </p>
                 {developmentCode && <p className="plain-card">Development code: <strong>{developmentCode}</strong></p>}
                 <div className="field" style={{ marginTop: 18 }}>
                   <label htmlFor="otp">4-digit code</label>

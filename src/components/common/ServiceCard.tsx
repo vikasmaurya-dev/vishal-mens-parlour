@@ -8,7 +8,7 @@ export function ServiceCard({ service, compact = false }: { service: Service; co
 
   return (
     <article className={`service-card ${compact ? 'compact' : ''}`}>
-      <img src={service.imagePath} alt={`${service.name} service`} loading="lazy" />
+      <img src={service.imagePath} alt={`${service.name} service`} loading="lazy" decoding="async" />
       <div className="service-body">
         <div className="service-head">
           <h3>{service.name}</h3>

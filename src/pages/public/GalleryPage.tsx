@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
+import { SeoHead } from '../../components/common/SeoHead'
 import { usePublicData } from '../../hooks/usePublicData'
 import type { GalleryItem } from '../../types/domain'
 
@@ -15,6 +16,12 @@ export function GalleryPage() {
 
   return (
     <main>
+      <SeoHead
+        title={`Gallery — ${businessSettings.salonName}`}
+        description="See our recent haircuts, beard styling, and grooming work. Real photos from real customers."
+        path="/gallery"
+        image={businessSettings.galleryHeroImage}
+      />
       <section
         className="page-hero"
         style={{ '--hero-image': `url(${businessSettings.galleryHeroImage})` } as CSSProperties}
@@ -41,7 +48,7 @@ export function GalleryPage() {
           <div className="gallery-grid masonry">
             {visible.map((item) => (
               <button className="gallery-item" key={item.id} onClick={() => setSelected(item)}>
-                <img src={item.thumbnailPath} alt={item.caption} loading="lazy" />
+                <img src={item.thumbnailPath} alt={item.caption} loading="lazy" decoding="async" />
               </button>
             ))}
           </div>

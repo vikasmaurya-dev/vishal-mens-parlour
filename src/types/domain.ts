@@ -132,6 +132,16 @@ export interface AdminProfile {
   active: boolean
 }
 
+export interface Testimonial {
+  id: string
+  customerName: string
+  rating: number
+  review: string
+  imagePath?: string
+  featured: boolean
+  active: boolean
+}
+
 export interface BookingSettings {
   bookingEnabled: boolean
   otpRequired: boolean

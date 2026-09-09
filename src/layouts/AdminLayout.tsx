@@ -1,8 +1,7 @@
 import { Bell, Calendar, CalendarCheck, ContactRound, LayoutDashboard, LogOut, PanelTop, Scissors, Search, Settings } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Brand } from '../components/common/Brand'
-import { hasSupabaseConfig, supabase } from '../lib/supabase'
-import { useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const navItems = [
   ['Dashboard', '/admin', LayoutDashboard],
@@ -20,21 +19,6 @@ export function AdminLayout() {
     if (supabase) await supabase.auth.signOut()
     navigate('/admin/login', { replace: true })
   }
-
-  useEffect(() => {
-    if (!hasSupabaseConfig || !supabase) return
-    let active = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (active && !data.user) navigate('/admin/login', { replace: true })
-    })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active && !session?.user) navigate('/admin/login', { replace: true })
-    })
-    return () => {
-      active = false
-      listener.subscription.unsubscribe()
-    }
-  }, [navigate])
 
   return (
     <div className="admin-shell">

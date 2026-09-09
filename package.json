@@ -1,41 +1,42 @@
 {
   "name": "hair-salion-project",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview",
     "supabase": "supabase",
     "supabase:link": "supabase link --project-ref cffcxcmsygmkxpfbzqsz",
-    "deploy:functions": "supabase functions deploy request-otp && supabase functions deploy verify-otp && supabase functions deploy create-booking"
+    "deploy:functions": "supabase functions deploy request-email-otp && supabase functions deploy verify-otp && supabase functions deploy create-booking && supabase functions deploy send-booking-emails && supabase functions deploy manage-booking"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.4",
-    "@tailwindcss/vite": "^4.3.3",
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "framer-motion": "^13.1.1",
-    "jsdom": "^29.1.1",
-    "lucide-react": "^1.39.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.3",
-    "tailwindcss": "^4.3.3",
-    "vitest": "^4.1.11",
-    "zod": "^4.5.4"
+    "@supabase/supabase-js": "^2.48.1",
+    "@tailwindcss/vite": "^4.0.6",
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.474.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.5",
+    "tailwindcss": "^4.0.6",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.1.0",
-    "oxlint": "^1.79.0",
-    "supabase": "^2.116.0",
-    "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "oxlint": "^0.15.9",
+    "supabase": "^2.9.6",
+    "typescript": "~5.8.2",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
   }
 }

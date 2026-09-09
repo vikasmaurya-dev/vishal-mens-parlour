@@ -4,16 +4,24 @@ import { Link } from 'react-router-dom'
 import type { CSSProperties } from 'react'
 import { siteOptions } from '../../constants/seedData'
 import { ServiceCard } from '../../components/common/ServiceCard'
+import { SeoHead } from '../../components/common/SeoHead'
 import { formatMoney } from '../../utils/format'
 import { usePublicData } from '../../hooks/usePublicData'
 
 export function HomePage() {
-  const { business: businessSettings, categories, galleryItems, offers, services } = usePublicData()
+  const { business: businessSettings, categories, galleryItems, offers, services, testimonials } = usePublicData()
   const featured = services.filter((service) => service.featured).slice(0, 6)
   const mainOffer = offers.find((offer) => offer.featured) ?? offers[0]
+  const activeTestimonials = testimonials.filter((item) => item.active).slice(0, 6)
 
   return (
     <main>
+      <SeoHead
+        title={`${businessSettings.salonName} — Premium Men's Grooming in ${businessSettings.city}`}
+        description={businessSettings.tagline || `Precision haircuts, beard styling and grooming for men in ${businessSettings.city}. Book online in minutes.`}
+        path="/"
+        image={businessSettings.heroImage}
+      />
       <section className="hero" style={{ '--hero-image': `url(${businessSettings.heroImage})` } as CSSProperties}>
         <motion.div
           className="hero-content"
@@ -71,7 +79,7 @@ export function HomePage() {
           <div className="grid category-grid">
             {categories.map((category) => (
               <Link className="image-card" key={category.id} to={`/services#${category.slug}`}>
-                <img src={category.imagePath} alt={category.name} loading="lazy" />
+                <img src={category.imagePath} alt={category.name} loading="lazy" decoding="async" />
                 <strong>{category.name}</strong>
                 <ArrowRight size={18} className="image-card-arrow" />
               </Link>
@@ -149,7 +157,7 @@ export function HomePage() {
                 </div>
               </article>
               <figure className="visit-image">
-                <img src={businessSettings.shopImage} alt="Interior of Vishal Mens Parlour" loading="lazy" />
+                <img src={businessSettings.shopImage} alt="Interior of Vishal Mens Parlour" loading="lazy" decoding="async" />
               </figure>
             </div>
           </div>
@@ -193,7 +201,7 @@ export function HomePage() {
 
       <section className="section dark story-section">
         <div className="container split">
-          <img src={galleryItems[2].imagePath} alt="Vishal Mens Parlour interior" loading="lazy" />
+          <img src={galleryItems[2].imagePath} alt="Vishal Mens Parlour interior" loading="lazy" decoding="async" />
           <div>
             <span className="eyebrow">More than just a haircut</span>
             <h2 className="section-title" style={{ textAlign: 'left' }}>
@@ -216,6 +224,29 @@ export function HomePage() {
           </div>
         </div>
       </section>
+      {activeTestimonials.length > 0 && (
+        <section className="section" aria-labelledby="testimonials-heading">
+          <div className="container">
+            <span className="eyebrow">What our clients say</span>
+            <h2 id="testimonials-heading" className="section-title" style={{ textAlign: 'left' }}>
+              Loved by regulars across {businessSettings.city}.
+            </h2>
+            <div className="grid" style={{ marginTop: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+              {activeTestimonials.map((item) => (
+                <article className="plain-card" key={item.id}>
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 10 }} aria-label={`${item.rating} out of 5 stars`}>
+                    {Array.from({ length: item.rating }).map((_, index) => (
+                      <Star key={index} size={16} color="var(--warm-2)" fill="var(--warm-2)" />
+                    ))}
+                  </div>
+                  <p style={{ fontStyle: 'italic', lineHeight: 1.6 }}>&ldquo;{item.review}&rdquo;</p>
+                  <p className="muted" style={{ marginTop: 12 }}>— {item.customerName}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       <section className="section home-final-cta">
         <div className="container">
           <Scissors size={26} style={{ margin: '0 auto 14px' }} />
