@@ -1,5 +1,6 @@
-import { Menu, MessageCircle, Phone } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Menu, MessageCircle, Phone, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { businessSettings } from '../constants/seedData'
 import { Brand } from '../components/common/Brand'
 
@@ -11,6 +12,23 @@ const links = [
 ]
 
 export function PublicLayout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
+  const whatsappUrl = `https://wa.me/${businessSettings.whatsapp.replace(/\D/g, '')}`
+  const telUrl = `tel:${businessSettings.phone}`
+
   return (
     <>
       <div className="top-strip">
@@ -30,21 +48,58 @@ export function PublicLayout() {
             ))}
           </div>
           <div className="actions">
-            <a className="btn secondary" href={`https://wa.me/${businessSettings.whatsapp.replace(/\D/g, '')}`}>
+            <a className="btn secondary" href={whatsappUrl}>
               <MessageCircle size={17} /> WhatsApp
             </a>
-            <a className="btn secondary" href={`tel:${businessSettings.phone}`}>
+            <a className="btn secondary" href={telUrl}>
               <Phone size={17} /> Call
             </a>
             <NavLink className="btn nav-cta" to="/book">
               Book Appointment
             </NavLink>
-            <button className="btn ghost mobile-menu" type="button" aria-label="Open menu">
-              <Menu size={20} />
+            <button
+              className="btn ghost mobile-menu"
+              type="button"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((current) => !current)}
+            >
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </nav>
       </header>
+
+      {menuOpen && (
+        <div
+          className="mobile-drawer-backdrop"
+          onClick={() => setMenuOpen(false)}
+          role="button"
+          aria-label="Close menu"
+          tabIndex={-1}
+        />
+      )}
+      <aside className={`mobile-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen}>
+        <div className="mobile-drawer-links">
+          {links.map(([label, href]) => (
+            <NavLink key={href} to={href} onClick={() => setMenuOpen(false)}>
+              {label}
+            </NavLink>
+          ))}
+        </div>
+        <div className="mobile-drawer-actions">
+          <NavLink className="btn" to="/book" onClick={() => setMenuOpen(false)}>
+            Book Appointment
+          </NavLink>
+          <a className="btn secondary" href={whatsappUrl}>
+            <MessageCircle size={17} /> WhatsApp
+          </a>
+          <a className="btn secondary" href={telUrl}>
+            <Phone size={17} /> Call
+          </a>
+        </div>
+      </aside>
+
       <Outlet />
       <footer className="footer">
         <div className="container footer-grid">
